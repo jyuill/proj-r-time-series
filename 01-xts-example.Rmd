@@ -1,0 +1,178 @@
+---
+title: "01 xts time series examples"
+author: "John Yuill"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+      code_folding: hide
+      toc: true
+      toc_depth: 3
+      toc_float:
+        toc_collapsed: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message=FALSE,
+                      warning=FALSE)
+
+library(tidyverse)
+library(lubridate)
+
+library(xts)
+library(zoo)
+library(quantmod) ## for fetching financial data
+library(dygraphs)
+
+## theme set for ggplot
+theme_set(theme_light())
+
+```
+
+## Get some data
+
+* import financial stock data using quantmod pkg, which automatically imports data as 'xts' object
+
+```{r}
+getSymbols(Symbols='CSIQ', auto.assign=TRUE)
+
+str(CSIQ)
+head(CSIQ)
+
+## drop Adjusted col moving fwd to save space when printing
+CSIQ <- CSIQ[,1:5]
+```
+
+## Basic filtering/subsetting
+
+### Filter dates
+
+* after given date
+
+```{r}
+CSIQ_2020 <- CSIQ['2020-01-01/'] ## from specified date fwd
+head(CSIQ_2020)
+```
+
+* before given end date
+
+```{r}
+CSIQ_2019 <- CSIQ['/2020-01-01'] ## from specified date fwd
+tail(CSIQ_2019)
+```
+
+* rolling recent period
+
+```{r}
+## last n items
+
+CSIQ_7d <- tail(CSIQ, n=7) 
+CSIQ_7d
+```
+
+* specified period
+
+```{r}
+## selected period
+CSIQ_Aug <- CSIQ['2020-08/2020-08-31'] ## Aug 1-31
+CSIQ_Aug
+```
+
+### Filter cols
+
+* as in base R
+
+```{r}
+CSIQ_2020_cl <- CSIQ_2020[,4]
+head(CSIQ_2020_cl)
+
+dygraph(CSIQ_2020_cl)
+```
+
+## Time Series Manipulation
+
+Leverage xts to work with time series objects 
+
+### End points by period
+
+* day, week, month, qtr, yr.
+* returns the locations of each last item in the specified type of period, aligned on calendar.
+* will include the last item available in the last period (last data point).
+* returns a vector starting with 0 and ending with the extent (last row) of your data.
+* can also use k to skip: on='years', k=4 returns location of every 4th yr in data (plus last)
+
+```{r}
+## get index number of last day of each year
+index_yr <- endpoints(CSIQ, on="years")
+## apply to time series to extract selected end points
+CSIQ_yr_end <- CSIQ[index_yr]
+head(CSIQ_yr_end[,c(2,3,5)]) ## selected cols for space
+
+dygraph(CSIQ_yr_end[,2])
+
+```
+
+```{r}
+index_week_end <- endpoints(CSIQ_Aug, on="weeks")
+CSIQ_Aug[index_week_end, 1:4] ## open, high, low, close selected
+```
+
+### Summarization
+
+```{r}
+##
+period.apply(CSIQ_Aug, INDEX=index_week_end, FUN=mean)
+
+```
+
+### Shortcut summarization
+
+```{r}
+## apply.weekly, apply.monthly, apply.quarterly, apply.yearly to summarize
+## FUN=<whatever summarization function for the period)
+apply.weekly(CSIQ_Aug, FUN=mean)
+```
+
+### Split into periods
+
+```{r}
+## split data into weeks - chunk the data into 'week' components, without summarizing
+CSIQ_Aug_weeks <- split(CSIQ_Aug, f='weeks')
+## second week: high, low, close selected
+CSIQ_Aug_weeks[[2]][,2:4]
+```
+
+## Aggregate time periods
+
+* Aggregate data by period
+* Can take a single variable and calculate OHLC statistics by period
+
+```{r}
+CSIQ_yearly <- to.period(CSIQ[,5], period='years', name='Annual', OHLC=TRUE)
+CSIQ_yearly
+```
+
+## Differences / Change
+
+* Get differences from one period to the next within a time series
+
+```{r}
+CSIQ_2020_diff <- diff(CSIQ_2020_cl)
+names(CSIQ_2020_diff) <- "Close.diffs"
+head(CSIQ_2020_diff)
+dygraph(CSIQ_2020_diff)
+
+```
+
+* Differences with lag
+
+```{r}
+CSIQ_2020_diff7 <- diff(CSIQ_2020_cl, lag=7)
+names(CSIQ_2020_diff7) <- "Close.diff7"
+head(CSIQ_2020_diff7, n=10)
+
+CSIQ_diffs <- merge(CSIQ_2020_diff, CSIQ_2020_diff7)
+head(CSIQ_diffs)
+dygraph(CSIQ_diffs)
+```
+
