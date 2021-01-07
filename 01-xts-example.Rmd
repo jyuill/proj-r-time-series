@@ -29,6 +29,14 @@ theme_set(theme_light())
 
 ```
 
+## Purpose
+
+Provide some basic examples of using 'xts' (extensible time series) which is a powerful way to work with time-related data in R.
+
+For more details and examples:
+
+* [xts cheat sheet](https://www.datacamp.com/community/blog/r-xts-cheat-sheet)
+
 ## Get some data
 
 * import financial stock data using quantmod pkg, which automatically imports data as 'xts' object
