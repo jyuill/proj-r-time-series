@@ -22,6 +22,7 @@ library(lubridate)
 library(xts)
 library(zoo)
 library(quantmod) ## for fetching financial data
+library(PerformanceAnalytics)
 library(dygraphs)
 
 ## theme set for ggplot
@@ -94,7 +95,26 @@ CSIQ_Aug
 CSIQ_2020_cl <- CSIQ_2020[,4]
 head(CSIQ_2020_cl)
 
+plot(CSIQ_2020_cl) ## use basic R plot
+```
+
+## Visualize
+
+* several options (where 'x' is your xts object) -> in order shown below
+    + plot(x): basic R plotting, will recognize ts and format dates
+    + ts.plot(x): specifically for time series, shows dates as index numbers
+    + plot.xts(x): very similar to basic plot
+    + dygraph(x): often used of financial charts; requires dygraphs pkg
+    + chart.TimeSeries(x): from PerformanceAnalytics pkg 
+
+Very simple examples. The last 3 choices above have many additional options, especially for financial data.
+
+```{r}
+plot(CSIQ_2020_cl)
+ts.plot(CSIQ_2020_cl)
+plot.xts(CSIQ_2020_cl)
 dygraph(CSIQ_2020_cl)
+chart.TimeSeries(CSIQ_2020_cl)
 ```
 
 ## Time Series Manipulation
